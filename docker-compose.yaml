@@ -1,0 +1,44 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: vendas
+      POSTGRES_PASSWORD: vendas
+      POSTGRES_DB: vendas
+    ports:
+      - "5432:5432"
+    volumes:
+      - dados_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vendas -d vendas"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  etl:
+    build: .
+    command: python -m pipeline --intervalo 3600
+    environment:
+      DATABASE_URL: postgresql://vendas:vendas@db:5432/vendas
+      URL_PLANILHA: ${URL_PLANILHA:-}
+    volumes:
+      - ./dados:/app/dados:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  painel:
+    build: .
+    command: streamlit run painel/app.py --server.port 8501 --server.address 0.0.0.0
+    environment:
+      DATABASE_URL: postgresql://vendas:vendas@db:5432/vendas
+    ports:
+      - "8501:8501"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  dados_pg:
