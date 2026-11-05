@@ -22,7 +22,7 @@ def carregado(conn, servidor_http):
 
 
 def conferencia_independente():
-    script = RAIZ / "tests" / "conferir_total.py"
+    script = RAIZ / "conferir_total.py"
 
     saida = subprocess.run(
         [sys.executable, str(script)],
