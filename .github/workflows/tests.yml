@@ -1,0 +1,30 @@
+name: testes
+on: [push, pull_request]
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: vendas
+          POSTGRES_PASSWORD: vendas
+          POSTGRES_DB: vendas
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U vendas -d vendas"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://vendas:vendas@localhost:5432/vendas
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python gerar_dados.py
+      - run: python -m pytest -q
